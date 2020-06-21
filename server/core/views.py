@@ -5,13 +5,8 @@ from rest_framework.views import APIView
 from core.models import Conversion
 
 
-# class ConversionSerializer(serializers.Serializer):
-#     value = serializers.IntegerField()
-#     model_id = serializers.IntegerField()
-#
-#     def create(self, validated_data):
-#         return Conversion(**validated_data)
-#
+def get_model_id(user_id):
+    return user_id % 2
 
 class ConversionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -26,14 +21,26 @@ class UserIdSerializer(serializers.Serializer):
 
 # noinspection PyMethodMayBeStatic
 class ConversionView(APIView):
-
+    """
+    It accepts request like this:
+    {
+    "user_id" : 1234,
+    "value" : 100
+    }
+    """
     def post(self, request, *args, **kwargs):
-        UserIdSerializer(data=request.data).is_valid(raise_exception=True)
+        user_serializer = UserIdSerializer(data=request.data)
+        user_serializer.is_valid(raise_exception=True)
 
-        model_id = request.data['user_id'] % 2
+        model_id = get_model_id(user_serializer.data['user_id'])
         data = {'value': request.data['value'], 'model_id': model_id}
         serializer = ConversionSerializer(data=data)
 
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+
+class PredictionView(APIView):
+    pass
