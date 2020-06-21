@@ -1,3 +1,5 @@
+import random
+
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -7,6 +9,11 @@ from core.models import Conversion
 
 def get_model_id(user_id):
     return user_id % 2
+
+
+def predict_lowest_effective_discount(data):
+    return random.choice([0, 5, 10, 15, 20])
+
 
 class ConversionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,6 +48,29 @@ class ConversionView(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+# noinspection PyAbstractClass
+class PredictionSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+    price = serializers.IntegerField()
 
+
+# noinspection PyMethodMayBeStatic
 class PredictionView(APIView):
-    pass
+
+    """
+    It accepts request like this:
+    {
+    "user_id" : 1234,
+    "price" : 100
+    }
+    """
+
+    def post(self, request, *args, **kwargs):
+        prediction_serializer = PredictionSerializer(data=request.data)
+        prediction_serializer.is_valid(raise_exception=True)
+
+        model_id = get_model_id(prediction_serializer.data['user_id'])
+
+        discount = predict_lowest_effective_discount(prediction_serializer.data)
+
+        return Response({'discount': discount}, status=status.HTTP_201_CREATED)
