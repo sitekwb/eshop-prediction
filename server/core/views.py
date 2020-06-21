@@ -1,6 +1,7 @@
 import random
 
 from rest_framework import serializers, status
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -74,3 +75,10 @@ class PredictionView(APIView):
         discount = predict_lowest_effective_discount(prediction_serializer.data)
 
         return Response({'discount': discount}, status=status.HTTP_201_CREATED)
+
+
+
+
+class ResultsView(ListAPIView):
+    queryset = Conversion.objects.all()
+    serializer_class = ConversionSerializer
