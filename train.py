@@ -4,24 +4,13 @@ import json
 with open('records2.json') as file:
     sessions = json.load(file)
 
-buys = []
+with open('buys2.json') as file:
+    buys = json.load(file)
 
-for session in sessions:
-    buys.append([])
-    buys_in_session = buys[-1]
-    for i in range(len(session)):
-        event = session[i]
-        buys_in_session.append(event['bought'])
-        del event['bought']
-        session[i] = list(event.values())
+import pandas as pd
 
-# import pandas as pd
-#
-# labels = pd.DataFrame(buys)
-# features = pd.DataFrame(sessions)
-
-labels = buys
-features = sessions
+features = pd.DataFrame(sessions)
+labels = pd.DataFrame(buys)
 
 # split to train and test
 RANDOM_STATE = 76
@@ -33,37 +22,30 @@ X_train, X_test, y_train, y_test = train_test_split(features, labels,
                                                     random_state=RANDOM_STATE)
 # end test_train_split
 
-# TODO FIT TRANSFORM
-
-# TODO delete
-# max_session_len = 0
-#
-# for session in features:
-#     max_session_len = max(max_session_len, len(session))
-#
-# print(max_session_len)  # -> 11
+# FIT TRANSFORM
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
 
 model_units = 64
+dense_units = 1
 
-import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-import pandas as pd
-import numpy as np
 
-shape = pd.DataFrame(X_train).shape
-print(shape)
+X_train = [X_train]
+y_train = [y_train]
 
 model = keras.Sequential()
-model.add(layers.LSTM(model_units, input_shape=shape))
-model.add(layers.Dense(1, activation='sigmoid'))
+#model.add(layers.LSTM(model_units, input_shape=shape))
+model.add(layers.Dense(64, activation='sigmoid', input_shape=(1, 28)))
 model.compile(loss='mean_squared_error', optimizer='adam')
 model.summary()
 
-a = tf.convert_to_tensor(X_train)
-type(X_train)
-
-# model.fit(a, y_train, epochs=1, batch_size=100, verbose=2)
+model.fit(X_train, y_train, batch_size=100, epochs=1, verbose=2)
+y = model.predict([X_test[0]])
+print(y)
 
 # {
 #       "time": 0.0,
