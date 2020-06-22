@@ -47,6 +47,11 @@ last_datetime = datetime.now()
 
 for event in events_list:
     # time
+
+    if event['event_type'] == 'BUY_PRODUCT':
+        buys[-1] = 1
+        continue
+
     current_datetime = datetime.strptime(event['timestamp'], '%Y-%m-%dT%H:%M:%S')
     time = current_datetime - last_datetime
     last_datetime = current_datetime
@@ -79,7 +84,7 @@ for event in events_list:
         events_dict['one_hot_category' + str(i)] = one_hot
         i += 1
 
-    buys.append(0 if event['event_type'] == 'BUY_PRODUCT' else 1)
+    buys.append(0)
     events.append(events_dict)
 
 with open('records2.json', 'w') as file:
