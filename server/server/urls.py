@@ -17,13 +17,14 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.urls import path, include
 
-from core.views import ConversionView, PredictionView, ResultsView
+from core.views import ConversionView, PredictionView, ResultsView, ResetView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^api-auth/', include('rest_framework.urls')),
     path('conversion/', ConversionView.as_view()),
     path('predict/', PredictionView.as_view()),
-    path('results/', ResultsView.as_view())
+    path('resultsAB/', ResultsView.as_view()),
+    path('resetAB/', ResetView.as_view()),
 
 ]
