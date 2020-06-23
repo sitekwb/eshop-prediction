@@ -1,11 +1,10 @@
 import random
 
+from core.models import Conversion
 from rest_framework import serializers, status
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from core.models import Conversion
 
 
 def get_model_id(user_id):
@@ -77,8 +76,22 @@ class PredictionView(APIView):
         return Response({'discount': discount}, status=status.HTTP_201_CREATED)
 
 
-
-
 class ResultsView(ListAPIView):
     queryset = Conversion.objects.all()
     serializer_class = ConversionSerializer
+
+
+class ResetView(GenericAPIView):
+
+    serializer_class = ConversionSerializer
+    def post(self, request, *args, **kwargs):
+
+        # list to force evaluation
+        all_objects = list(Conversion.objects.all())
+        count = len(all_objects)
+
+        Conversion.objects.all().delete()
+
+        serializer = self.get_serializer(all_objects,many=True)
+
+        return Response({'deleted_count': count, 'deleted': serializer.data }, status=status.HTTP_200_OK)
