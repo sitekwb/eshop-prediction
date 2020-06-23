@@ -2,3 +2,5 @@ tensorflow
 pandas
 numpy
 sklearn
+django
+djangorestframework
