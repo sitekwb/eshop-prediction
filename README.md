@@ -9,14 +9,14 @@ W ramach etapu 2.:
  - napisaliśmy klienta, który przeprowadza sztuczny test A/B
  
  ## Trenowanie
-Kod trenujący model znajduję sie oraz jest opisany w [tym notatniku](4-train/train.ipynb).
-Model został porównany z modelem bazowym, który zawsze zwraca najczęstsza klasę.
+Kod trenujący model znajduje się oraz jest opisany w [tym notatniku](4-train/train.ipynb).
+Model został porównany z modelem bazowym, który zawsze zwraca najczęstszą klasę.
 
 ## Oszacowanie najlepszej zniżki
 Wyjściem naszego modelu jest prawdopodobieństwo zakupu.
 Przydzielona zniżka jest jednym z atrybutów.
 Założyliśmy, że możliwe zniżki to `0, 5, 10, 15, 20%`.
-W naszym oszacowaniu założyliśmy, że dochód ze sprzedaży każdego produktu jest stały i wynosi `40%`.
+W naszym oszacowaniu założyliśmy, że marża ze sprzedaży każdego produktu wynosi `40%`.
 Wybieramy najlepszą zniżkę wg następującego schematu:
  - badamy `prawdopodobieństwo` jako wyjście modelu dla kolejnych zniżek
  - dla każdej zniżki liczby wartość średniego procentowego zysku wg wzoru:
