@@ -1,18 +1,61 @@
 import random
 
+import pandas as pd
 from core.models import Conversion
+from keras.engine.saving import load_model
 from rest_framework import serializers, status
 from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+import pickle
+import os
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 def get_model_id(user_id):
     return user_id % 2
 
 
-def predict_lowest_effective_discount(data):
-    return random.choice([0, 5, 10, 15, 20])
+def dummy_prediction(data):
+    return random.choice([0, 1])
+
+
+def get_prediction_function(model_id):
+    if model_id == 0:
+        return dummy_prediction
+    else:
+
+
+        module_dir = os.path.dirname(__file__)  # get current directory
+        file_path = os.path.join(module_dir, 'model.pckl')
+
+        with open(file_path, 'rb') as file:
+            model = pickle.load(file)
+
+        return model.predict
+
+
+def predict_lowest_effective_discount(data, prediction_function):
+    for discount in [0, 5, 10, 15, 20]:
+        data_copy = data.copy()
+        data_copy['discount'] = discount
+        features = pd.DataFrame([data_copy])
+        x = features.values.tolist()
+        # print('lista', x)
+
+        module_dir = os.path.dirname(__file__)  # get current directory
+        file_path = os.path.join(module_dir, 'scaler.pckl')
+
+        with open(file_path, 'rb') as file:
+            scaler = pickle.load(file)
+
+        x = scaler.transform(x)
+        # print('po skalowniu', x)
+        prediction = prediction_function(x)
+        print('prediction', prediction)
+        if prediction > 0.5:
+            return discount
+    return 0
 
 
 class ConversionSerializer(serializers.ModelSerializer):
@@ -51,18 +94,44 @@ class ConversionView(APIView):
 # noinspection PyAbstractClass
 class PredictionSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
-    price = serializers.IntegerField()
+    price = serializers.FloatField()
+    product_views_count = serializers.IntegerField()
+    category_view_count = serializers.IntegerField()
+    bought_with_lower_count = serializers.IntegerField()
+    bought_category_count = serializers.IntegerField()
+    time = serializers.FloatField()
+
+    one_hot_city0 = serializers.IntegerField()
+    one_hot_city1 = serializers.IntegerField()
+    one_hot_city2 = serializers.IntegerField()
+    one_hot_city3 = serializers.IntegerField()
+    one_hot_city4 = serializers.IntegerField()
+    one_hot_city5 = serializers.IntegerField()
+    one_hot_city6 = serializers.IntegerField()
+    one_hot_city7 = serializers.IntegerField()
+
+    one_hot_category0 = serializers.IntegerField()
+    one_hot_category1 = serializers.IntegerField()
+    one_hot_category2 = serializers.IntegerField()
+    one_hot_category3 = serializers.IntegerField()
+    one_hot_category4 = serializers.IntegerField()
+    one_hot_category5 = serializers.IntegerField()
+    one_hot_category6 = serializers.IntegerField()
+    one_hot_category7 = serializers.IntegerField()
+    one_hot_category8 = serializers.IntegerField()
+    one_hot_category9 = serializers.IntegerField()
+    one_hot_category10 = serializers.IntegerField()
+    one_hot_category11 = serializers.IntegerField()
+    one_hot_category12 = serializers.IntegerField()
+    one_hot_category13 = serializers.IntegerField()
+    one_hot_category14 = serializers.IntegerField()
 
 
 # noinspection PyMethodMayBeStatic
 class PredictionView(APIView):
-
     """
     It accepts request like this:
-    {
-    "user_id" : 1234,
-    "price" : 100
-    }
+    {"user_id": 1233, "price": 246.0, "product_views_count": 22, "category_view_count": 20, "bought_with_lower_count": 2, "bought_category_count": 3, "time": 1639.05, "one_hot_city0": 1, "one_hot_city1": 0, "one_hot_city2": 0, "one_hot_city3": 0, "one_hot_city4": 0, "one_hot_city5": 0, "one_hot_city6": 0, "one_hot_city7": 0, "one_hot_category0": 0, "one_hot_category1": 0, "one_hot_category2": 1, "one_hot_category3": 0, "one_hot_category4": 0, "one_hot_category5": 0, "one_hot_category6": 0, "one_hot_category7": 0, "one_hot_category8": 0, "one_hot_category9": 0, "one_hot_category10": 0, "one_hot_category11": 0, "one_hot_category12": 0, "one_hot_category13": 0, "one_hot_category14": 0}
     """
 
     def post(self, request, *args, **kwargs):
@@ -71,7 +140,12 @@ class PredictionView(APIView):
 
         model_id = get_model_id(prediction_serializer.data['user_id'])
 
-        discount = predict_lowest_effective_discount(prediction_serializer.data)
+        prediction_function = get_prediction_function(model_id)
+
+        data = prediction_serializer.data
+        del data['user_id']
+
+        discount = predict_lowest_effective_discount(data, prediction_function)
 
         return Response({'discount': discount}, status=status.HTTP_201_CREATED)
 
@@ -92,6 +166,6 @@ class ResetView(GenericAPIView):
 
         Conversion.objects.all().delete()
 
-        serializer = self.get_serializer(all_objects,many=True)
+        serializer = self.get_serializer(all_objects, many=True)
 
-        return Response({'deleted_count': count, 'deleted': serializer.data }, status=status.HTTP_200_OK)
+        return Response({'deleted_count': count, 'deleted': serializer.data}, status=status.HTTP_200_OK)
