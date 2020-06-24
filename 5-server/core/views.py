@@ -9,54 +9,45 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 import pickle
 import os
-import tensorflow.compat.v1 as tf
-tf.disable_v2_behavior()
+from .apps import CoreConfig
+import numpy as np
 
 def get_model_id(user_id):
     return user_id % 2
 
 
 def dummy_prediction(data):
-    return random.choice([0, 1])
+    return [[np.random.uniform(0, 1)]]
 
 
 def get_prediction_function(model_id):
     if model_id == 0:
         return dummy_prediction
     else:
-
-
-        module_dir = os.path.dirname(__file__)  # get current directory
-        file_path = os.path.join(module_dir, 'model.pckl')
-
-        with open(file_path, 'rb') as file:
-            model = pickle.load(file)
-
-        return model.predict
+        return CoreConfig.model.predict
 
 
 def predict_lowest_effective_discount(data, prediction_function):
+    max_indicator = 0
+    final_discount = 0
+    print(prediction_function.__name__)
     for discount in [0, 5, 10, 15, 20]:
         data_copy = data.copy()
         data_copy['discount'] = discount
         features = pd.DataFrame([data_copy])
-        x = features.values.tolist()
+        x = features
         # print('lista', x)
 
-        module_dir = os.path.dirname(__file__)  # get current directory
-        file_path = os.path.join(module_dir, 'scaler.pckl')
-
-        with open(file_path, 'rb') as file:
-            scaler = pickle.load(file)
-
-        x = scaler.transform(x)
+        x = CoreConfig.scaler.transform(x)
         # print('po skalowniu', x)
         prediction = prediction_function(x)
-        print('prediction', prediction)
-        if prediction > 0.5:
-            return discount
-    return 0
-
+        current_prediction = prediction[0][0]
+        current_indicator = current_prediction * (40 - discount)
+        print(current_prediction)
+        if max_indicator < current_indicator:
+            max_indicator = current_indicator
+            final_discount = discount
+    return final_discount
 
 class ConversionSerializer(serializers.ModelSerializer):
     class Meta:

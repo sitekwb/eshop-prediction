@@ -6,4 +6,4 @@ from django.db import models
 
 class Conversion(models.Model):
     model_id = models.IntegerField()
-    value = models.IntegerField()
+    value = models.FloatField()
